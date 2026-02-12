@@ -196,14 +196,42 @@ if not df.empty:
 
     df['Lit_Score'] = df['Symbol'].apply(calculate_validation)
     df['Score'] = df.apply(calculate_priority, axis=1)
+st.sidebar.caption("Data: KEGG API | System: Streamlit")
 
+# --- ACCESS CONTROL: HIDE INNOVATION LAB UNLESS PIN IS UNLOCKED ---
+if "innovation_lab_unlocked" not in st.session_state:
+    st.session_state.innovation_lab_unlocked = False
+
+configured_pin = str(st.secrets.get("innovation_lab_pin", ""))
+
+with st.sidebar.expander("🔒 Innovation Lab Access", expanded=False):
+    entered_pin = st.text_input("Enter PIN", type="password", key="innovation_lab_pin_input")
+    unlock_clicked = st.button("Unlock Innovation Lab", key="innovation_lab_unlock_btn", use_container_width=True)
+
+    if unlock_clicked:
+        if configured_pin and entered_pin == configured_pin:
+            st.session_state.innovation_lab_unlocked = True
+            st.success("Innovation Lab unlocked for this session.")
+        elif not configured_pin:
+            st.warning("No PIN configured. Add `innovation_lab_pin` to Streamlit secrets.")
+        else:
+            st.error("Incorrect PIN")
+
+    if st.session_state.innovation_lab_unlocked:
+        if st.button("Lock Innovation Lab", key="innovation_lab_lock_btn", use_container_width=True):
+            st.session_state.innovation_lab_unlocked = False
+            st.info("Innovation Lab locked.")
 # --- MAIN CONTENT ---
 st.title(f"🧬 {disease_choice} Metabolic Framework")
 
 st.markdown(f"*This resource guide serves as a foundational reference for computational hypothesis generation, validation, and extension of the {disease_choice} metabolic mechanisms.*")
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📊 Target Discovery", "🕸️ Interaction Network", "🔬 Enrichment & Manuscript", "🚀 Innovation Lab", "🧪 Digital Twin", "🔁 Counterfactual Engine"])
-
+if st.session_state.get("innovation_lab_unlocked", False):
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📊 Target Discovery", "🕸️ Interaction Network", "🔬 Enrichment & Manuscript", "🚀 Innovation Lab", "🧪 Digital Twin", "🔁 Counterfactual Engine"])
+else:
+    tab1, tab2, tab3, tab5, tab6 = st.tabs(["📊 Target Discovery", "🕸️ Interaction Network", "🔬 Enrichment & Manuscript", "🧪 Digital Twin", "🔁 Counterfactual Engine"])
+    tab4 = None
 with tab1:
     col_a, col_b = st.columns([2, 1])
     with col_a:
