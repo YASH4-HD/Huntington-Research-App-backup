@@ -1,0 +1,8 @@
+streamlit
+pandas
+bioservices
+matplotlib
+networkx
+plotly
+scipy
+numpy
