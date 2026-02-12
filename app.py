@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import fisher_exact
 import io
-
+from itertools import combinations
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="NeuroMetabolic Framework", page_icon="🧬", layout="wide")
 
