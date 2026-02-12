@@ -510,3 +510,97 @@ The framework is evolving from static pathway analysis into an explainable decis
         mime="text/plain",
         use_container_width=True,
     )
+
+    st.markdown("---")
+    st.subheader("🧪 Digital Twin Sandbox (Prototype)")
+    st.caption("Simulate disease-state shifts by perturbing key biological pressures and progression stage.")
+
+    stage_multiplier = {
+        "Pre-symptomatic": 0.9,
+        "Early disease": 1.0,
+        "Advanced disease": 1.2,
+    }
+
+    role_map = {
+        "🔋 Mitochondrial Dysfunction": "mitochondrial",
+        "📦 Proteostasis / PSMC": "proteostasis",
+        "♻️ Autophagy": "autophagy",
+        "💀 Apoptosis": "apoptosis",
+        "🧠 Synaptic / Excitotoxicity": "synaptic",
+    }
+
+    c_stage, c_mito, c_prot = st.columns(3)
+    with c_stage:
+        disease_stage = st.selectbox(
+            "Progression stage",
+            ["Pre-symptomatic", "Early disease", "Advanced disease"],
+            index=1,
+            key="digital_twin_stage"
+        )
+    with c_mito:
+        mito_stress = st.slider("Mitochondrial stress", 0, 100, 55, key="digital_twin_mito")
+    with c_prot:
+        proteostasis_load = st.slider("Proteostasis load", 0, 100, 60, key="digital_twin_proteostasis")
+
+    c_auto, c_apop, c_syn = st.columns(3)
+    with c_auto:
+        autophagy_support = st.slider("Autophagy support", 0, 100, 50, key="digital_twin_autophagy")
+    with c_apop:
+        apoptosis_pressure = st.slider("Apoptosis pressure", 0, 100, 58, key="digital_twin_apoptosis")
+    with c_syn:
+        synaptic_toxicity = st.slider("Synaptic toxicity", 0, 100, 52, key="digital_twin_synaptic")
+
+    pressure_values = {
+        "mitochondrial": mito_stress,
+        "proteostasis": proteostasis_load,
+        "autophagy": autophagy_support,
+        "apoptosis": apoptosis_pressure,
+        "synaptic": synaptic_toxicity,
+    }
+
+    twin_df = df.copy()
+    stage_factor = stage_multiplier[disease_stage]
+
+    def role_pressure_multiplier(role):
+        pressure_key = role_map.get(role)
+        if pressure_key is None:
+            return 1.0
+
+        if pressure_key == "autophagy":
+            # Higher autophagy support is protective.
+            return max(0.65, 1.15 - (pressure_values[pressure_key] / 200))
+
+        return 0.85 + (pressure_values[pressure_key] / 100) * 0.7
+
+    twin_df["Twin_Multiplier"] = twin_df["Functional Role"].apply(role_pressure_multiplier) * stage_factor
+    twin_df["Twin_Score"] = (twin_df["Score"] * twin_df["Twin_Multiplier"]).round(2)
+    twin_df["Score_Delta"] = (twin_df["Twin_Score"] - twin_df["Score"]).round(2)
+
+    top_baseline = df.sort_values("Score", ascending=False).head(5)[["Symbol", "Score"]]
+    top_twin = twin_df.sort_values("Twin_Score", ascending=False).head(5)[["Symbol", "Twin_Score", "Score_Delta", "Functional Role"]]
+
+    m1, m2, m3 = st.columns(3)
+    with m1:
+        st.metric("Stage factor", f"{stage_factor:.2f}x")
+    with m2:
+        st.metric("Highest twin score", f"{top_twin.iloc[0]['Twin_Score']:.1f}")
+    with m3:
+        upward_shift = int((twin_df["Score_Delta"] > 0).sum())
+        st.metric("Genes with upward shift", upward_shift)
+
+    c_left, c_right = st.columns(2)
+    with c_left:
+        st.markdown("**Top 5 Baseline Priorities**")
+        st.dataframe(top_baseline, use_container_width=True, hide_index=True)
+    with c_right:
+        st.markdown("**Top 5 Digital Twin Priorities**")
+        st.dataframe(top_twin, use_container_width=True, hide_index=True)
+
+    role_shift = (
+        twin_df.groupby("Functional Role", as_index=False)[["Score", "Twin_Score"]]
+        .mean()
+        .rename(columns={"Score": "Baseline", "Twin_Score": "Digital Twin"})
+    )
+
+    st.markdown("**Mechanism burden shift (mean score by role)**")
+    st.bar_chart(role_shift.set_index("Functional Role")[["Baseline", "Digital Twin"]])
