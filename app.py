@@ -201,7 +201,7 @@ st.title(f"🧬 {disease_choice} Metabolic Framework")
 
 st.markdown(f"*This resource guide serves as a foundational reference for computational hypothesis generation, validation, and extension of the {disease_choice} metabolic mechanisms.*")
 
-tab1, tab2, tab3 = st.tabs(["📊 Target Discovery", "🕸️ Interaction Network", "🔬 Enrichment & Manuscript"])
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Target Discovery", "🕸️ Interaction Network", "🔬 Enrichment & Manuscript", "🚀 Innovation Lab"])
 
 with tab1:
     col_a, col_b = st.columns([2, 1])
@@ -398,3 +398,115 @@ END OF REPORT
     st.markdown(f"1. Disease Pathway: {pathway_id} | 2. KEGG API | 3. Fisher's Exact Test Analysis")
 
 st.sidebar.caption("Data: KEGG API | System: Streamlit")
+with tab4:
+    st.subheader("🚀 Innovation Lab — Award-Winning Strategy Builder")
+    st.markdown("Generate a practical strategy to make this framework stand out in grants, competitions, and PhD evaluations.")
+
+    col_goal, col_horizon = st.columns(2)
+    with col_goal:
+        innovation_goal = st.selectbox(
+            "Primary objective",
+            [
+                "Scientific Novelty",
+                "Clinical Translation",
+                "Open-Science Reproducibility",
+                "AI + Systems Biology Integration"
+            ]
+        )
+    with col_horizon:
+        time_horizon = st.selectbox("Execution window", ["30 days", "90 days", "6 months"])
+
+    score_weights = {
+        "Scientific Novelty": {"impact": 0.45, "feasibility": 0.25, "rigor": 0.30},
+        "Clinical Translation": {"impact": 0.40, "feasibility": 0.35, "rigor": 0.25},
+        "Open-Science Reproducibility": {"impact": 0.25, "feasibility": 0.35, "rigor": 0.40},
+        "AI + Systems Biology Integration": {"impact": 0.40, "feasibility": 0.20, "rigor": 0.40},
+    }
+
+    candidate_innovations = [
+        {
+            "Idea": "Digital Twin Simulator",
+            "Impact": 95,
+            "Feasibility": 50,
+            "Rigor": 72,
+            "Deliverable": "Interactive progression simulator with perturbation sliders",
+        },
+        {
+            "Idea": "Counterfactual Intervention Engine",
+            "Impact": 90,
+            "Feasibility": 60,
+            "Rigor": 78,
+            "Deliverable": "What-if ranking of single and combination interventions",
+        },
+        {
+            "Idea": "Cell-Type Aware Enrichment",
+            "Impact": 85,
+            "Feasibility": 70,
+            "Rigor": 88,
+            "Deliverable": "Neuron/Astrocyte/Microglia-specific pathway enrichment overlays",
+        },
+        {
+            "Idea": "Multi-Omics Concordance Index",
+            "Impact": 88,
+            "Feasibility": 55,
+            "Rigor": 92,
+            "Deliverable": "Cross-validation panel across transcriptomics/proteomics/metabolomics",
+        },
+        {
+            "Idea": "Evidence Strength Dashboard",
+            "Impact": 78,
+            "Feasibility": 92,
+            "Rigor": 94,
+            "Deliverable": "Confidence tiers, provenance trail, and manuscript supplement exports",
+        },
+    ]
+
+    weights = score_weights[innovation_goal]
+    innovation_df = pd.DataFrame(candidate_innovations)
+    innovation_df["Strategic Score"] = (
+        innovation_df["Impact"] * weights["impact"]
+        + innovation_df["Feasibility"] * weights["feasibility"]
+        + innovation_df["Rigor"] * weights["rigor"]
+    ).round(1)
+    innovation_df = innovation_df.sort_values("Strategic Score", ascending=False).reset_index(drop=True)
+
+    st.markdown("### Ranked innovation roadmap")
+    st.dataframe(innovation_df[["Idea", "Strategic Score", "Deliverable"]], use_container_width=True, hide_index=True)
+
+    top_pick = innovation_df.iloc[0]
+    runner_up = innovation_df.iloc[1]
+
+    st.markdown("### Recommended next move")
+    st.success(
+        f"For **{disease_choice}** and objective **{innovation_goal}**, start with **{top_pick['Idea']}** "
+        f"(Strategic Score: {top_pick['Strategic Score']})."
+    )
+    st.info(
+        f"Second priority: **{runner_up['Idea']}**. Suggested horizon: **{time_horizon}** with milestone-driven delivery."
+    )
+
+    action_plan = f"""AWARD-READY ACTION PLAN
+
+Disease context: {disease_choice}
+Objective: {innovation_goal}
+Execution window: {time_horizon}
+
+Priority 1: {top_pick['Idea']}
+Deliverable: {top_pick['Deliverable']}
+Strategic Score: {top_pick['Strategic Score']}
+
+Priority 2: {runner_up['Idea']}
+Deliverable: {runner_up['Deliverable']}
+Strategic Score: {runner_up['Strategic Score']}
+
+Judging narrative:
+The framework is evolving from static pathway analysis into an explainable decision-support system that generates testable, reproducible, and translational hypotheses.
+"""
+
+    st.download_button(
+        label="📥 Download Action Plan",
+        data=action_plan,
+        file_name=f"{disease_choice.replace(' ', '_')}_award_strategy.txt",
+        mime="text/plain",
+        use_container_width=True,
+    )
