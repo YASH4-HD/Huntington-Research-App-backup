@@ -604,3 +604,127 @@ The framework is evolving from static pathway analysis into an explainable decis
 
     st.markdown("**Mechanism burden shift (mean score by role)**")
     st.bar_chart(role_shift.set_index("Functional Role")[["Baseline", "Digital Twin"]])
+
+
+    st.markdown("---")
+    st.subheader('🔁 Mechanism Counterfactual Engine ("What if we target X?")')
+    st.caption("Estimate which single or combination interventions most reduce a selected pathological burden and quantify compensatory pathway effects.")
+
+    mechanism_options = {
+        "Apoptosis burden": "💀 Apoptosis",
+        "Mitochondrial dysfunction": "🔋 Mitochondrial Dysfunction",
+        "Proteostasis burden": "📦 Proteostasis / PSMC",
+        "Synaptic toxicity": "🧠 Synaptic / Excitotoxicity",
+    }
+
+    intervention_library = {
+        "Boost autophagy": {
+            "♻️ Autophagy": -0.22,
+            "💀 Apoptosis": -0.10,
+            "📦 Proteostasis / PSMC": -0.06,
+        },
+        "Enhance mitochondrial biogenesis": {
+            "🔋 Mitochondrial Dysfunction": -0.20,
+            "💀 Apoptosis": -0.08,
+            "🧠 Synaptic / Excitotoxicity": -0.05,
+        },
+        "Proteasome rescue": {
+            "📦 Proteostasis / PSMC": -0.21,
+            "💀 Apoptosis": -0.07,
+            "🔋 Mitochondrial Dysfunction": -0.03,
+        },
+        "Anti-excitotoxic modulation": {
+            "🧠 Synaptic / Excitotoxicity": -0.18,
+            "💀 Apoptosis": -0.06,
+        },
+        "Caspase pathway inhibition": {
+            "💀 Apoptosis": -0.24,
+            "🧠 Synaptic / Excitotoxicity": -0.04,
+        },
+    }
+
+    controls_left, controls_right = st.columns(2)
+    with controls_left:
+        outcome_label = st.selectbox("Outcome to minimize", list(mechanism_options.keys()), key="cf_outcome")
+        max_combo = st.selectbox("Maximum intervention size", [1, 2, 3], index=2, key="cf_combo")
+    with controls_right:
+        ci_iterations = st.slider("Confidence interval iterations", 100, 2000, 600, step=100, key="cf_iter")
+        show_top_n = st.slider("Show top combinations", 3, 15, 8, key="cf_top_n")
+
+    selected_outcome = mechanism_options[outcome_label]
+    current_burden = (
+        twin_df.groupby("Functional Role")["Twin_Score"].mean().to_dict()
+    )
+    base_outcome_value = current_burden.get(selected_outcome, float(twin_df["Twin_Score"].mean()))
+
+    intervention_names = list(intervention_library.keys())
+    combo_candidates = []
+    for r in range(1, max_combo + 1):
+        combo_candidates.extend(combinations(intervention_names, r))
+
+    rng = np.random.default_rng(seed=sum(ord(c) for c in disease_choice + selected_outcome))
+    records = []
+
+    for combo in combo_candidates:
+        aggregate_effects = {}
+        for intervention in combo:
+            for mechanism, effect in intervention_library[intervention].items():
+                aggregate_effects[mechanism] = aggregate_effects.get(mechanism, 0) + effect
+
+        synergy_bonus = 1 + (len(combo) - 1) * 0.08
+        aggregate_effects = {k: v * synergy_bonus for k, v in aggregate_effects.items()}
+
+        predicted = {}
+        for mechanism, baseline_value in current_burden.items():
+            mechanism_effect = aggregate_effects.get(mechanism, 0)
+            updated = baseline_value * (1 + mechanism_effect)
+            predicted[mechanism] = max(updated, 0.01)
+
+        outcome_after = predicted.get(selected_outcome, base_outcome_value)
+        delta = outcome_after - base_outcome_value
+
+        compensation_roles = [
+            "🔋 Mitochondrial Dysfunction",
+            "📦 Proteostasis / PSMC",
+            "🧠 Synaptic / Excitotoxicity",
+            "💀 Apoptosis",
+        ]
+        compensation = 0
+        for role in compensation_roles:
+            if role != selected_outcome:
+                compensation += max(0, predicted.get(role, 0) - current_burden.get(role, 0))
+
+        noise_scale = max(abs(delta) * 0.22, 0.5)
+        samples = base_outcome_value + delta + rng.normal(0, noise_scale, size=ci_iterations)
+        ci_low, ci_high = np.percentile(samples, [2.5, 97.5])
+
+        records.append({
+            "Intervention Combo": " + ".join(combo),
+            "Combo Size": len(combo),
+            "Predicted Outcome": round(outcome_after, 2),
+            "Change vs Baseline": round(delta, 2),
+            "Compensation Risk": round(compensation, 2),
+            "CI 95% (Low)": round(float(ci_low), 2),
+            "CI 95% (High)": round(float(ci_high), 2),
+        })
+
+    counterfactual_df = pd.DataFrame(records).sort_values(
+        by=["Predicted Outcome", "Compensation Risk", "Combo Size"],
+        ascending=[True, True, True],
+    )
+
+    st.markdown(f"**Baseline burden for {outcome_label}: {base_outcome_value:.2f}**")
+
+    best_row = counterfactual_df.iloc[0]
+    c_best, c_delta, c_risk = st.columns(3)
+    with c_best:
+        st.metric("Best intervention combo", best_row["Intervention Combo"])
+    with c_delta:
+        st.metric("Predicted change", f"{best_row['Change vs Baseline']:.2f}")
+    with c_risk:
+        st.metric("Compensation risk", f"{best_row['Compensation Risk']:.2f}")
+
+    st.dataframe(counterfactual_df.head(show_top_n), use_container_width=True, hide_index=True)
+
+    viz_df = counterfactual_df.head(show_top_n).set_index("Intervention Combo")
+    st.bar_chart(viz_df[["Predicted Outcome", "CI 95% (Low)", "CI 95% (High)"]])
