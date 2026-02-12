@@ -201,7 +201,7 @@ st.title(f"🧬 {disease_choice} Metabolic Framework")
 
 st.markdown(f"*This resource guide serves as a foundational reference for computational hypothesis generation, validation, and extension of the {disease_choice} metabolic mechanisms.*")
 
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Target Discovery", "🕸️ Interaction Network", "🔬 Enrichment & Manuscript", "🚀 Innovation Lab"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📊 Target Discovery", "🕸️ Interaction Network", "🔬 Enrichment & Manuscript", "🚀 Innovation Lab", "🧪 Digital Twin", "🔁 Counterfactual Engine"])
 
 with tab1:
     col_a, col_b = st.columns([2, 1])
@@ -398,6 +398,69 @@ END OF REPORT
     st.markdown(f"1. Disease Pathway: {pathway_id} | 2. KEGG API | 3. Fisher's Exact Test Analysis")
 
 st.sidebar.caption("Data: KEGG API | System: Streamlit")
+def build_digital_twin_dataframe(dataframe, ui_key_prefix="dt"):
+    stage_multiplier = {
+        "Pre-symptomatic": 0.9,
+        "Early disease": 1.0,
+        "Advanced disease": 1.2,
+    }
+
+    role_map = {
+        "🔋 Mitochondrial Dysfunction": "mitochondrial",
+        "📦 Proteostasis / PSMC": "proteostasis",
+        "♻️ Autophagy": "autophagy",
+        "💀 Apoptosis": "apoptosis",
+        "🧠 Synaptic / Excitotoxicity": "synaptic",
+    }
+
+    c_stage, c_mito, c_prot = st.columns(3)
+    with c_stage:
+        disease_stage = st.selectbox(
+            "Progression stage",
+            ["Pre-symptomatic", "Early disease", "Advanced disease"],
+            index=1,
+            key=f"{ui_key_prefix}_stage"
+        )
+    with c_mito:
+        mito_stress = st.slider("Mitochondrial stress", 0, 100, 55, key=f"{ui_key_prefix}_mito")
+    with c_prot:
+        proteostasis_load = st.slider("Proteostasis load", 0, 100, 60, key=f"{ui_key_prefix}_proteostasis")
+
+    c_auto, c_apop, c_syn = st.columns(3)
+    with c_auto:
+        autophagy_support = st.slider("Autophagy support", 0, 100, 50, key=f"{ui_key_prefix}_autophagy")
+    with c_apop:
+        apoptosis_pressure = st.slider("Apoptosis pressure", 0, 100, 58, key=f"{ui_key_prefix}_apoptosis")
+    with c_syn:
+        synaptic_toxicity = st.slider("Synaptic toxicity", 0, 100, 52, key=f"{ui_key_prefix}_synaptic")
+
+    pressure_values = {
+        "mitochondrial": mito_stress,
+        "proteostasis": proteostasis_load,
+        "autophagy": autophagy_support,
+        "apoptosis": apoptosis_pressure,
+        "synaptic": synaptic_toxicity,
+    }
+
+    twin_df = dataframe.copy()
+    stage_factor = stage_multiplier[disease_stage]
+
+    def role_pressure_multiplier(role):
+        pressure_key = role_map.get(role)
+        if pressure_key is None:
+            return 1.0
+
+        if pressure_key == "autophagy":
+            return max(0.65, 1.15 - (pressure_values[pressure_key] / 200))
+
+        return 0.85 + (pressure_values[pressure_key] / 100) * 0.7
+
+    twin_df["Twin_Multiplier"] = twin_df["Functional Role"].apply(role_pressure_multiplier) * stage_factor
+    twin_df["Twin_Score"] = (twin_df["Score"] * twin_df["Twin_Multiplier"]).round(2)
+    twin_df["Score_Delta"] = (twin_df["Twin_Score"] - twin_df["Score"]).round(2)
+    return twin_df, stage_factor
+
+
 with tab4:
     st.subheader("🚀 Innovation Lab — Award-Winning Strategy Builder")
     st.markdown("Generate a practical strategy to make this framework stand out in grants, competitions, and PhD evaluations.")
@@ -424,41 +487,11 @@ with tab4:
     }
 
     candidate_innovations = [
-        {
-            "Idea": "Digital Twin Simulator",
-            "Impact": 95,
-            "Feasibility": 50,
-            "Rigor": 72,
-            "Deliverable": "Interactive progression simulator with perturbation sliders",
-        },
-        {
-            "Idea": "Counterfactual Intervention Engine",
-            "Impact": 90,
-            "Feasibility": 60,
-            "Rigor": 78,
-            "Deliverable": "What-if ranking of single and combination interventions",
-        },
-        {
-            "Idea": "Cell-Type Aware Enrichment",
-            "Impact": 85,
-            "Feasibility": 70,
-            "Rigor": 88,
-            "Deliverable": "Neuron/Astrocyte/Microglia-specific pathway enrichment overlays",
-        },
-        {
-            "Idea": "Multi-Omics Concordance Index",
-            "Impact": 88,
-            "Feasibility": 55,
-            "Rigor": 92,
-            "Deliverable": "Cross-validation panel across transcriptomics/proteomics/metabolomics",
-        },
-        {
-            "Idea": "Evidence Strength Dashboard",
-            "Impact": 78,
-            "Feasibility": 92,
-            "Rigor": 94,
-            "Deliverable": "Confidence tiers, provenance trail, and manuscript supplement exports",
-        },
+        {"Idea": "Digital Twin Simulator", "Impact": 95, "Feasibility": 50, "Rigor": 72, "Deliverable": "Interactive progression simulator with perturbation sliders"},
+        {"Idea": "Counterfactual Intervention Engine", "Impact": 90, "Feasibility": 60, "Rigor": 78, "Deliverable": "What-if ranking of single and combination interventions"},
+        {"Idea": "Cell-Type Aware Enrichment", "Impact": 85, "Feasibility": 70, "Rigor": 88, "Deliverable": "Neuron/Astrocyte/Microglia-specific pathway enrichment overlays"},
+        {"Idea": "Multi-Omics Concordance Index", "Impact": 88, "Feasibility": 55, "Rigor": 92, "Deliverable": "Cross-validation panel across transcriptomics/proteomics/metabolomics"},
+        {"Idea": "Evidence Strength Dashboard", "Impact": 78, "Feasibility": 92, "Rigor": 94, "Deliverable": "Confidence tiers, provenance trail, and manuscript supplement exports"},
     ]
 
     weights = score_weights[innovation_goal]
@@ -475,15 +508,8 @@ with tab4:
 
     top_pick = innovation_df.iloc[0]
     runner_up = innovation_df.iloc[1]
-
-    st.markdown("### Recommended next move")
-    st.success(
-        f"For **{disease_choice}** and objective **{innovation_goal}**, start with **{top_pick['Idea']}** "
-        f"(Strategic Score: {top_pick['Strategic Score']})."
-    )
-    st.info(
-        f"Second priority: **{runner_up['Idea']}**. Suggested horizon: **{time_horizon}** with milestone-driven delivery."
-    )
+    st.success(f"For **{disease_choice}** and objective **{innovation_goal}**, start with **{top_pick['Idea']}** (Strategic Score: {top_pick['Strategic Score']}).")
+    st.info(f"Second priority: **{runner_up['Idea']}**. Suggested horizon: **{time_horizon}** with milestone-driven delivery.")
 
     action_plan = f"""AWARD-READY ACTION PLAN
 
@@ -502,80 +528,13 @@ Strategic Score: {runner_up['Strategic Score']}
 Judging narrative:
 The framework is evolving from static pathway analysis into an explainable decision-support system that generates testable, reproducible, and translational hypotheses.
 """
+    st.download_button("📥 Download Action Plan", action_plan, f"{disease_choice.replace(' ', '_')}_award_strategy.txt", "text/plain", use_container_width=True)
 
-    st.download_button(
-        label="📥 Download Action Plan",
-        data=action_plan,
-        file_name=f"{disease_choice.replace(' ', '_')}_award_strategy.txt",
-        mime="text/plain",
-        use_container_width=True,
-    )
-
-    st.markdown("---")
+with tab5:
     st.subheader("🧪 Digital Twin Sandbox (Prototype)")
     st.caption("Simulate disease-state shifts by perturbing key biological pressures and progression stage.")
 
-    stage_multiplier = {
-        "Pre-symptomatic": 0.9,
-        "Early disease": 1.0,
-        "Advanced disease": 1.2,
-    }
-
-    role_map = {
-        "🔋 Mitochondrial Dysfunction": "mitochondrial",
-        "📦 Proteostasis / PSMC": "proteostasis",
-        "♻️ Autophagy": "autophagy",
-        "💀 Apoptosis": "apoptosis",
-        "🧠 Synaptic / Excitotoxicity": "synaptic",
-    }
-
-    c_stage, c_mito, c_prot = st.columns(3)
-    with c_stage:
-        disease_stage = st.selectbox(
-            "Progression stage",
-            ["Pre-symptomatic", "Early disease", "Advanced disease"],
-            index=1,
-            key="digital_twin_stage"
-        )
-    with c_mito:
-        mito_stress = st.slider("Mitochondrial stress", 0, 100, 55, key="digital_twin_mito")
-    with c_prot:
-        proteostasis_load = st.slider("Proteostasis load", 0, 100, 60, key="digital_twin_proteostasis")
-
-    c_auto, c_apop, c_syn = st.columns(3)
-    with c_auto:
-        autophagy_support = st.slider("Autophagy support", 0, 100, 50, key="digital_twin_autophagy")
-    with c_apop:
-        apoptosis_pressure = st.slider("Apoptosis pressure", 0, 100, 58, key="digital_twin_apoptosis")
-    with c_syn:
-        synaptic_toxicity = st.slider("Synaptic toxicity", 0, 100, 52, key="digital_twin_synaptic")
-
-    pressure_values = {
-        "mitochondrial": mito_stress,
-        "proteostasis": proteostasis_load,
-        "autophagy": autophagy_support,
-        "apoptosis": apoptosis_pressure,
-        "synaptic": synaptic_toxicity,
-    }
-
-    twin_df = df.copy()
-    stage_factor = stage_multiplier[disease_stage]
-
-    def role_pressure_multiplier(role):
-        pressure_key = role_map.get(role)
-        if pressure_key is None:
-            return 1.0
-
-        if pressure_key == "autophagy":
-            # Higher autophagy support is protective.
-            return max(0.65, 1.15 - (pressure_values[pressure_key] / 200))
-
-        return 0.85 + (pressure_values[pressure_key] / 100) * 0.7
-
-    twin_df["Twin_Multiplier"] = twin_df["Functional Role"].apply(role_pressure_multiplier) * stage_factor
-    twin_df["Twin_Score"] = (twin_df["Score"] * twin_df["Twin_Multiplier"]).round(2)
-    twin_df["Score_Delta"] = (twin_df["Twin_Score"] - twin_df["Score"]).round(2)
-
+    twin_df, stage_factor = build_digital_twin_dataframe(df, ui_key_prefix="dt")
     top_baseline = df.sort_values("Score", ascending=False).head(5)[["Symbol", "Score"]]
     top_twin = twin_df.sort_values("Twin_Score", ascending=False).head(5)[["Symbol", "Twin_Score", "Score_Delta", "Functional Role"]]
 
@@ -585,8 +544,7 @@ The framework is evolving from static pathway analysis into an explainable decis
     with m2:
         st.metric("Highest twin score", f"{top_twin.iloc[0]['Twin_Score']:.1f}")
     with m3:
-        upward_shift = int((twin_df["Score_Delta"] > 0).sum())
-        st.metric("Genes with upward shift", upward_shift)
+        st.metric("Genes with upward shift", int((twin_df["Score_Delta"] > 0).sum()))
 
     c_left, c_right = st.columns(2)
     with c_left:
@@ -596,19 +554,16 @@ The framework is evolving from static pathway analysis into an explainable decis
         st.markdown("**Top 5 Digital Twin Priorities**")
         st.dataframe(top_twin, use_container_width=True, hide_index=True)
 
-    role_shift = (
-        twin_df.groupby("Functional Role", as_index=False)[["Score", "Twin_Score"]]
-        .mean()
-        .rename(columns={"Score": "Baseline", "Twin_Score": "Digital Twin"})
-    )
-
+    role_shift = twin_df.groupby("Functional Role", as_index=False)[["Score", "Twin_Score"]].mean().rename(columns={"Score": "Baseline", "Twin_Score": "Digital Twin"})
     st.markdown("**Mechanism burden shift (mean score by role)**")
     st.bar_chart(role_shift.set_index("Functional Role")[["Baseline", "Digital Twin"]])
 
-
-    st.markdown("---")
+with tab6:
     st.subheader('🔁 Mechanism Counterfactual Engine ("What if we target X?")')
     st.caption("Estimate which single or combination interventions most reduce a selected pathological burden and quantify compensatory pathway effects.")
+
+    st.markdown("**Scenario context for counterfactual analysis**")
+    twin_df_cf, _ = build_digital_twin_dataframe(df, ui_key_prefix="cf")
 
     mechanism_options = {
         "Apoptosis burden": "💀 Apoptosis",
@@ -616,31 +571,12 @@ The framework is evolving from static pathway analysis into an explainable decis
         "Proteostasis burden": "📦 Proteostasis / PSMC",
         "Synaptic toxicity": "🧠 Synaptic / Excitotoxicity",
     }
-
     intervention_library = {
-        "Boost autophagy": {
-            "♻️ Autophagy": -0.22,
-            "💀 Apoptosis": -0.10,
-            "📦 Proteostasis / PSMC": -0.06,
-        },
-        "Enhance mitochondrial biogenesis": {
-            "🔋 Mitochondrial Dysfunction": -0.20,
-            "💀 Apoptosis": -0.08,
-            "🧠 Synaptic / Excitotoxicity": -0.05,
-        },
-        "Proteasome rescue": {
-            "📦 Proteostasis / PSMC": -0.21,
-            "💀 Apoptosis": -0.07,
-            "🔋 Mitochondrial Dysfunction": -0.03,
-        },
-        "Anti-excitotoxic modulation": {
-            "🧠 Synaptic / Excitotoxicity": -0.18,
-            "💀 Apoptosis": -0.06,
-        },
-        "Caspase pathway inhibition": {
-            "💀 Apoptosis": -0.24,
-            "🧠 Synaptic / Excitotoxicity": -0.04,
-        },
+        "Boost autophagy": {"♻️ Autophagy": -0.22, "💀 Apoptosis": -0.10, "📦 Proteostasis / PSMC": -0.06},
+        "Enhance mitochondrial biogenesis": {"🔋 Mitochondrial Dysfunction": -0.20, "💀 Apoptosis": -0.08, "🧠 Synaptic / Excitotoxicity": -0.05},
+        "Proteasome rescue": {"📦 Proteostasis / PSMC": -0.21, "💀 Apoptosis": -0.07, "🔋 Mitochondrial Dysfunction": -0.03},
+        "Anti-excitotoxic modulation": {"🧠 Synaptic / Excitotoxicity": -0.18, "💀 Apoptosis": -0.06},
+        "Caspase pathway inhibition": {"💀 Apoptosis": -0.24, "🧠 Synaptic / Excitotoxicity": -0.04},
     }
 
     controls_left, controls_right = st.columns(2)
@@ -652,19 +588,15 @@ The framework is evolving from static pathway analysis into an explainable decis
         show_top_n = st.slider("Show top combinations", 3, 15, 8, key="cf_top_n")
 
     selected_outcome = mechanism_options[outcome_label]
-    current_burden = (
-        twin_df.groupby("Functional Role")["Twin_Score"].mean().to_dict()
-    )
-    base_outcome_value = current_burden.get(selected_outcome, float(twin_df["Twin_Score"].mean()))
+    current_burden = twin_df_cf.groupby("Functional Role")["Twin_Score"].mean().to_dict()
+    base_outcome_value = current_burden.get(selected_outcome, float(twin_df_cf["Twin_Score"].mean()))
 
-    intervention_names = list(intervention_library.keys())
     combo_candidates = []
     for r in range(1, max_combo + 1):
-        combo_candidates.extend(combinations(intervention_names, r))
+        combo_candidates.extend(combinations(list(intervention_library.keys()), r))
 
     rng = np.random.default_rng(seed=sum(ord(c) for c in disease_choice + selected_outcome))
     records = []
-
     for combo in combo_candidates:
         aggregate_effects = {}
         for intervention in combo:
@@ -676,21 +608,13 @@ The framework is evolving from static pathway analysis into an explainable decis
 
         predicted = {}
         for mechanism, baseline_value in current_burden.items():
-            mechanism_effect = aggregate_effects.get(mechanism, 0)
-            updated = baseline_value * (1 + mechanism_effect)
-            predicted[mechanism] = max(updated, 0.01)
+            predicted[mechanism] = max(baseline_value * (1 + aggregate_effects.get(mechanism, 0)), 0.01)
 
         outcome_after = predicted.get(selected_outcome, base_outcome_value)
         delta = outcome_after - base_outcome_value
 
-        compensation_roles = [
-            "🔋 Mitochondrial Dysfunction",
-            "📦 Proteostasis / PSMC",
-            "🧠 Synaptic / Excitotoxicity",
-            "💀 Apoptosis",
-        ]
         compensation = 0
-        for role in compensation_roles:
+        for role in ["🔋 Mitochondrial Dysfunction", "📦 Proteostasis / PSMC", "🧠 Synaptic / Excitotoxicity", "💀 Apoptosis"]:
             if role != selected_outcome:
                 compensation += max(0, predicted.get(role, 0) - current_burden.get(role, 0))
 
@@ -708,11 +632,7 @@ The framework is evolving from static pathway analysis into an explainable decis
             "CI 95% (High)": round(float(ci_high), 2),
         })
 
-    counterfactual_df = pd.DataFrame(records).sort_values(
-        by=["Predicted Outcome", "Compensation Risk", "Combo Size"],
-        ascending=[True, True, True],
-    )
-
+    counterfactual_df = pd.DataFrame(records).sort_values(by=["Predicted Outcome", "Compensation Risk", "Combo Size"], ascending=[True, True, True])
     st.markdown(f"**Baseline burden for {outcome_label}: {base_outcome_value:.2f}**")
 
     best_row = counterfactual_df.iloc[0]
@@ -725,6 +645,4 @@ The framework is evolving from static pathway analysis into an explainable decis
         st.metric("Compensation risk", f"{best_row['Compensation Risk']:.2f}")
 
     st.dataframe(counterfactual_df.head(show_top_n), use_container_width=True, hide_index=True)
-
-    viz_df = counterfactual_df.head(show_top_n).set_index("Intervention Combo")
-    st.bar_chart(viz_df[["Predicted Outcome", "CI 95% (Low)", "CI 95% (High)"]])
+    st.bar_chart(counterfactual_df.head(show_top_n).set_index("Intervention Combo")[["Predicted Outcome", "CI 95% (Low)", "CI 95% (High)"]])
