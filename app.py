@@ -490,74 +490,75 @@ def build_digital_twin_dataframe(dataframe, ui_key_prefix="dt"):
     return twin_df, stage_factor
 
 
-with tab4:
-    st.subheader("🚀 Innovation Lab — Award-Winning Strategy Builder")
-    st.markdown("Generate a practical strategy to make this framework stand out in grants, competitions, and PhD evaluations.")
+if tab4 is not None:
+    with tab4:
+        st.subheader("🚀 Innovation Lab — Award-Winning Strategy Builder")
+        st.markdown("Generate a practical strategy to make this framework stand out in grants, competitions, and PhD evaluations.")
 
-    col_goal, col_horizon = st.columns(2)
-    with col_goal:
-        innovation_goal = st.selectbox(
-            "Primary objective",
-            [
-                "Scientific Novelty",
-                "Clinical Translation",
-                "Open-Science Reproducibility",
-                "AI + Systems Biology Integration"
-            ]
-        )
-    with col_horizon:
-        time_horizon = st.selectbox("Execution window", ["30 days", "90 days", "6 months"])
+        col_goal, col_horizon = st.columns(2)
+        with col_goal:
+            innovation_goal = st.selectbox(
+                "Primary objective",
+                [
+                    "Scientific Novelty",
+                    "Clinical Translation",
+                    "Open-Science Reproducibility",
+                    "AI + Systems Biology Integration"
+                ]
+            )
+        with col_horizon:
+            time_horizon = st.selectbox("Execution window", ["30 days", "90 days", "6 months"])
 
-    score_weights = {
-        "Scientific Novelty": {"impact": 0.45, "feasibility": 0.25, "rigor": 0.30},
-        "Clinical Translation": {"impact": 0.40, "feasibility": 0.35, "rigor": 0.25},
-        "Open-Science Reproducibility": {"impact": 0.25, "feasibility": 0.35, "rigor": 0.40},
-        "AI + Systems Biology Integration": {"impact": 0.40, "feasibility": 0.20, "rigor": 0.40},
-    }
+        score_weights = {
+            "Scientific Novelty": {"impact": 0.45, "feasibility": 0.25, "rigor": 0.30},
+            "Clinical Translation": {"impact": 0.40, "feasibility": 0.35, "rigor": 0.25},
+            "Open-Science Reproducibility": {"impact": 0.25, "feasibility": 0.35, "rigor": 0.40},
+            "AI + Systems Biology Integration": {"impact": 0.40, "feasibility": 0.20, "rigor": 0.40},
+        }
 
-    candidate_innovations = [
-        {"Idea": "Digital Twin Simulator", "Impact": 95, "Feasibility": 50, "Rigor": 72, "Deliverable": "Interactive progression simulator with perturbation sliders"},
-        {"Idea": "Counterfactual Intervention Engine", "Impact": 90, "Feasibility": 60, "Rigor": 78, "Deliverable": "What-if ranking of single and combination interventions"},
-        {"Idea": "Cell-Type Aware Enrichment", "Impact": 85, "Feasibility": 70, "Rigor": 88, "Deliverable": "Neuron/Astrocyte/Microglia-specific pathway enrichment overlays"},
-        {"Idea": "Multi-Omics Concordance Index", "Impact": 88, "Feasibility": 55, "Rigor": 92, "Deliverable": "Cross-validation panel across transcriptomics/proteomics/metabolomics"},
-        {"Idea": "Evidence Strength Dashboard", "Impact": 78, "Feasibility": 92, "Rigor": 94, "Deliverable": "Confidence tiers, provenance trail, and manuscript supplement exports"},
-    ]
+        candidate_innovations = [
+            {"Idea": "Digital Twin Simulator", "Impact": 95, "Feasibility": 50, "Rigor": 72, "Deliverable": "Interactive progression simulator with perturbation sliders"},
+            {"Idea": "Counterfactual Intervention Engine", "Impact": 90, "Feasibility": 60, "Rigor": 78, "Deliverable": "What-if ranking of single and combination interventions"},
+            {"Idea": "Cell-Type Aware Enrichment", "Impact": 85, "Feasibility": 70, "Rigor": 88, "Deliverable": "Neuron/Astrocyte/Microglia-specific pathway enrichment overlays"},
+            {"Idea": "Multi-Omics Concordance Index", "Impact": 88, "Feasibility": 55, "Rigor": 92, "Deliverable": "Cross-validation panel across transcriptomics/proteomics/metabolomics"},
+            {"Idea": "Evidence Strength Dashboard", "Impact": 78, "Feasibility": 92, "Rigor": 94, "Deliverable": "Confidence tiers, provenance trail, and manuscript supplement exports"},
+        ]
 
-    weights = score_weights[innovation_goal]
-    innovation_df = pd.DataFrame(candidate_innovations)
-    innovation_df["Strategic Score"] = (
-        innovation_df["Impact"] * weights["impact"]
-        + innovation_df["Feasibility"] * weights["feasibility"]
-        + innovation_df["Rigor"] * weights["rigor"]
-    ).round(1)
-    innovation_df = innovation_df.sort_values("Strategic Score", ascending=False).reset_index(drop=True)
+        weights = score_weights[innovation_goal]
+        innovation_df = pd.DataFrame(candidate_innovations)
+        innovation_df["Strategic Score"] = (
+            innovation_df["Impact"] * weights["impact"]
+            + innovation_df["Feasibility"] * weights["feasibility"]
+            + innovation_df["Rigor"] * weights["rigor"]
+        ).round(1)
+        innovation_df = innovation_df.sort_values("Strategic Score", ascending=False).reset_index(drop=True)
 
-    st.markdown("### Ranked innovation roadmap")
-    st.dataframe(innovation_df[["Idea", "Strategic Score", "Deliverable"]], use_container_width=True, hide_index=True)
+        st.markdown("### Ranked innovation roadmap")
+        st.dataframe(innovation_df[["Idea", "Strategic Score", "Deliverable"]], use_container_width=True, hide_index=True)
 
-    top_pick = innovation_df.iloc[0]
-    runner_up = innovation_df.iloc[1]
-    st.success(f"For **{disease_choice}** and objective **{innovation_goal}**, start with **{top_pick['Idea']}** (Strategic Score: {top_pick['Strategic Score']}).")
-    st.info(f"Second priority: **{runner_up['Idea']}**. Suggested horizon: **{time_horizon}** with milestone-driven delivery.")
+        top_pick = innovation_df.iloc[0]
+        runner_up = innovation_df.iloc[1]
+        st.success(f"For **{disease_choice}** and objective **{innovation_goal}**, start with **{top_pick['Idea']}** (Strategic Score: {top_pick['Strategic Score']}).")
+        st.info(f"Second priority: **{runner_up['Idea']}**. Suggested horizon: **{time_horizon}** with milestone-driven delivery.")
 
-    action_plan = f"""AWARD-READY ACTION PLAN
+        action_plan = f"""AWARD-READY ACTION PLAN
 
-Disease context: {disease_choice}
-Objective: {innovation_goal}
-Execution window: {time_horizon}
+    Disease context: {disease_choice}
+    Objective: {innovation_goal}
+    Execution window: {time_horizon}
 
-Priority 1: {top_pick['Idea']}
-Deliverable: {top_pick['Deliverable']}
-Strategic Score: {top_pick['Strategic Score']}
+    Priority 1: {top_pick['Idea']}
+    Deliverable: {top_pick['Deliverable']}
+    Strategic Score: {top_pick['Strategic Score']}
 
-Priority 2: {runner_up['Idea']}
-Deliverable: {runner_up['Deliverable']}
-Strategic Score: {runner_up['Strategic Score']}
+    Priority 2: {runner_up['Idea']}
+    Deliverable: {runner_up['Deliverable']}
+    Strategic Score: {runner_up['Strategic Score']}
 
-Judging narrative:
-The framework is evolving from static pathway analysis into an explainable decision-support system that generates testable, reproducible, and translational hypotheses.
-"""
-    st.download_button("📥 Download Action Plan", action_plan, f"{disease_choice.replace(' ', '_')}_award_strategy.txt", "text/plain", use_container_width=True)
+    Judging narrative:
+    The framework is evolving from static pathway analysis into an explainable decision-support system that generates testable, reproducible, and translational hypotheses.
+    """
+        st.download_button("📥 Download Action Plan", action_plan, f"{disease_choice.replace(' ', '_')}_award_strategy.txt", "text/plain", use_container_width=True)
 
 with tab5:
     st.subheader("🧪 Digital Twin Sandbox (Prototype)")
